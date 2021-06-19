@@ -1,0 +1,11 @@
+spring:
+  web:
+    resources:
+      add-mappings: false
+
+  mustache:
+    suffix: ".html"
+
+  mvc:
+    pathmatch:
+      matching-strategy: path-pattern-parser

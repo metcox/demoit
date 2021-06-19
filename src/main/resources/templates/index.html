@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang=en>
+{{#slide}}
+    <head>
+        <meta charset="utf-8">
+        <title>Demo {{ currentSlide }}/{{ slideCount }}</title>
+        <link rel="stylesheet" href="/style.css">
+        <script>
+            const CurrentStep = {{ currentSlide }};
+            const StepCount = {{ slideCount }};
+            const NextURL = '{{ nextUrl }}';
+            const PrevURL = '{{ prevUrl }}';
+        </script>
+    </head>
+    <body>
+        <div id="top">{{{ Content }}}
+            <nav-arrows previous="{{ prevUrl }}" next="{{ nextUrl }}"></nav-arrows>
+        </div>
+        <div id="progression" style="width: calc(100vw * {{ currentSlide }} / {{ slideCount }})"></div>
+    </body>
+    <script src="/js/demoit.js"></script>
+{{/slide}}
+</html>
