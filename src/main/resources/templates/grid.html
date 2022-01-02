@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+			.cell {
+				display: inline-block;
+				overflow: hidden;
+				margin: 1rem;
+				width: 480px;
+				/*
+				height: 270px;
+				*/
+			}
+			.thumb {
+				overflow: hidden;
+				display: inline-block;
+				position: relative;
+				width: 480px;
+				height: 270px;
+				border: 1px solid #BBB;
+			}
+            .thumb iframe {
+				width: 1920px;
+				height: 1080px;
+				transform: scale(0.25);
+				transform-origin: 0 0;
+            }
+        </style>
+</head>
+<body>
+<title>DemoIt grid view</title>
+
+<h2><a href="/">Start presentation</a></h2>
+
+{{#indexes}}
+<div class="cell">
+    <h2><a href="/{{.}}">Step {{.}}</a></h2>
+    <div class="thumb">
+        <iframe src="/{{.}}"></iframe>
+    </div>
+</div>
+{{/indexes}}
+
+</body>
+</html>

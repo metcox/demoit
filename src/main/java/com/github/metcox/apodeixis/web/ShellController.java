@@ -1,6 +1,6 @@
-package com.github.metcox.demoit.web;
+package com.github.metcox.apodeixis.web;
 
-import com.github.metcox.demoit.conf.AppProperties;
+import com.github.metcox.apodeixis.conf.AppProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -47,7 +47,8 @@ public class ShellController {
         URI uri = uriBuilder
                 .scheme("http")
                 .host("localhost")
-                .port(appProperties.getShellPort())
+                .port(8080)
+                .path("shellSocket")
                 .queryParam("arg", "{commands}")
                 .build(String.join(";", commands));
 
@@ -68,7 +69,7 @@ public class ShellController {
 
         // Source custom .bashrc
         // TODO use application args instead of 'sample'
-        Path bashRc = Paths.get("sample", ".demoit", ".bashrc").toAbsolutePath();
+        Path bashRc = Paths.get("sample", ".apodeixis", ".bashrc").toAbsolutePath();
 
         if (Files.exists(bashRc)) {
             LOGGER.info("Using bashrc file {}", bashRc);
@@ -92,7 +93,7 @@ public class ShellController {
         String content;
         try {
             // TODO use application args instead of 'sample'
-            content = Files.readString(Paths.get("sample", ".demoit", file));
+            content = Files.readString(Paths.get("sample", ".apodeixis", file));
         } catch (IOException e) {
             LOGGER.warn("Unable to read file {}", file, e);
             return null;

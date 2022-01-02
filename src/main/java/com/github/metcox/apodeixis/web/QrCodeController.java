@@ -1,4 +1,4 @@
-package com.github.metcox.demoit.web;
+package com.github.metcox.apodeixis.web;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;

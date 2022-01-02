@@ -1,4 +1,4 @@
-package com.github.metcox.demoit.web;
+package com.github.metcox.apodeixis.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

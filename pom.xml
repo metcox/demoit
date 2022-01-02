@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.4</version>
+        <version>2.6.1</version>
     </parent>
 
     <groupId>com.github.metcox</groupId>
@@ -14,7 +14,8 @@
         <java.version>11</java.version>
         <revision>1.0.0-SNAPSHOT</revision>
         <lib.qrcode.version>3.4.1</lib.qrcode.version>
-        <lib.docker.version>3.2.8</lib.docker.version>
+        <lib.docker.version>3.2.12</lib.docker.version>
+        <lib.pty4j.version>0.12.5</lib.pty4j.version>
     </properties>
 
     <dependencies>
@@ -26,11 +27,25 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
             <version>${lib.qrcode.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.python</groupId>
+            <artifactId>jython-standalone</artifactId>
+            <version>2.7.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.pygments</groupId>
+            <artifactId>pygments</artifactId>
+            <version>2.5.2</version>
         </dependency>
 
         <dependency>
@@ -43,8 +58,35 @@
             <artifactId>docker-java-transport-httpclient5</artifactId>
             <version>${lib.docker.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.pty4j</groupId>
+            <artifactId>pty4j</artifactId>
+            <version>${lib.pty4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+        </dependency>
+
 
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jetbrains-ij</id>
+            <url>https://packages.jetbrains.team/maven/p/ij/intellij-dependencies</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>

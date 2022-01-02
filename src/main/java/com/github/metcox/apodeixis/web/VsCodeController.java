@@ -1,4 +1,4 @@
-package com.github.metcox.demoit.web;
+package com.github.metcox.apodeixis.web;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -56,7 +56,7 @@ public class VsCodeController {
                 restTemplate.execute("http://localhost:18080/", HttpMethod.HEAD, null, ClientHttpResponse::getRawStatusCode);
                 break;
             } catch (HttpStatusCodeException e) {
-                // well we received a response so we're fine
+                // well, we receive a response so no need to wait more
                 break;
             } catch (Exception e) {
                 // not good

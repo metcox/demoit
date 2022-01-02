@@ -1,4 +1,4 @@
-package com.github.metcox.demoit.conf;
+package com.github.metcox.apodeixis.conf;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
