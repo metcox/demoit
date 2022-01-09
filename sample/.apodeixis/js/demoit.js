@@ -219,8 +219,8 @@ class SourceCode extends BaseHTMLElement {
             this.hash = '';
         }
         this.files = this.getAttribute('files').split(' ').filter(n => n.trim() !== '');
-        this.startLines = this.getAttribute('start-lines').split(';');
-        this.endLines = this.getAttribute('end-lines').split(';');
+        this.startLines = !this.getAttribute('start-lines') ? null : this.getAttribute('start-lines').split((';'));
+        this.endLines = !this.getAttribute('end-lines') ? null : this.getAttribute('end-lines').split(';');
 
         return `
         <fake-window title="code ~ ${this.folder}">
@@ -243,8 +243,8 @@ class SourceCode extends BaseHTMLElement {
 
     async showCurrentTab(current) {
         const file = this.files[current];
-        const startLines = this.startLines[current];
-        const endLines = this.endLines[current];
+        const startLines = !this.startLines ? '' : this.startLines[current];
+        const endLines = !this.endLines ? '' : this.endLines[current];
         const url = `/sourceCode/${this.folder}/${file}?hash=${this.hash}&style=${this.code_style}&startLine=${startLines}&endLine=${endLines}`;
 
         const response = await fetch(url);
