@@ -57,7 +57,8 @@ public class TerminalService {
 
         this.process = new PtyProcessBuilder(termCommand)
                 .setEnvironment(environment)
-                .setDirectory(userHome).start();
+                .setDirectory(userHome)
+                .start();
 
         process.setWinSize(new WinSize(columns, rows));
         this.inputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -167,6 +168,19 @@ public class TerminalService {
         LOGGER.info("onTerminalClose");
         if (null != process && process.isAlive()) {
             process.destroy();
+            closeQuietly(outputWriter);
+            closeQuietly(inputReader);
+            closeQuietly(errorReader);
+        }
+    }
+
+    private static void closeQuietly(Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (final IOException ioe) {
+            // ignore
         }
     }
 
