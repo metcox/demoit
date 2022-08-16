@@ -1,16 +1,22 @@
 package com.github.metcox.apodeixis.web;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.PullResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -25,8 +31,13 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Controller
@@ -94,7 +105,13 @@ public class VsCodeController {
             //
         }
 
-        String source = Paths.get("sample").toFile().getAbsolutePath();
+        PullImageCmd pullImageCmd = dockerClient.pullImageCmd("codercom/code-server:3.4.1");
+        ResultCallback.Adapter<PullResponseItem> pullResponseCallback = pullImageCmd.start();
+        try {
+            pullResponseCallback.awaitCompletion();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         CreateContainerCmd createContainerCmd = dockerClient
                 .createContainerCmd("codercom/code-server:3.4.1")
@@ -102,14 +119,92 @@ public class VsCodeController {
                 .withCmd("--auth=none", "--disable-telemetry")
                 .withExposedPorts(ExposedPort.tcp(8080));
         createContainerCmd
+                .withUser("coder")
                 .getHostConfig()
                 .withPortBindings(PortBinding.parse("18080:8080"))
-                .withBinds(Bind.parse(source + ":/app"));
+//                .withBinds(Bind.parse("demoit-vscode-vol:/app"))
+        ;
         CreateContainerResponse container = createContainerCmd.exec();
 
-        dockerClient
-                .startContainerCmd(container.getId())
-                .exec();
+        dockerClient.startContainerCmd(container.getId()).exec();
+
+        Path outputPath = null;
+        try {
+            Path inputPath = Paths.get("sample");
+            outputPath = Files.createTempFile("docker-java", ".tar.gz");
+            createTarGzipFolder(inputPath, outputPath);
+            FileInputStream fileInputStream = FileUtils.openInputStream(outputPath.toFile());
+            dockerClient.copyArchiveToContainerCmd(container.getId()).withTarInputStream(fileInputStream).withRemotePath("/app").exec();
+        } catch (IOException createFileIOException) {
+            //
+        } finally {
+            if (outputPath != null) {
+                outputPath.toFile().delete();
+            }
+        }
+    }
+
+
+    public static void createTarGzipFolder(Path inputPath, Path outputPath) throws IOException {
+
+        try (OutputStream fOut = Files.newOutputStream(outputPath);
+             BufferedOutputStream buffOut = new BufferedOutputStream(fOut);
+             GzipCompressorOutputStream gzOut = new GzipCompressorOutputStream(buffOut);
+             TarArchiveOutputStream tOut = new TarArchiveOutputStream(gzOut)) {
+
+            Files.walkFileTree(inputPath, new SimpleFileVisitor<>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+
+                    Path targetFile = inputPath.relativize(dir);
+
+                    TarArchiveEntry tarEntry = new TarArchiveEntry(
+                            dir.toFile(), targetFile.toString());
+                    tarEntry.setUserId(1000);
+                    tarEntry.setGroupId(1000);
+
+                    tOut.putArchiveEntry(tarEntry);
+
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+
+                    // only copy files, no symbolic links
+                    if (attributes.isSymbolicLink()) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    // get filename
+                    Path targetFile = inputPath.relativize(file);
+
+                    TarArchiveEntry tarEntry = new TarArchiveEntry(
+                            file.toFile(), targetFile.toString());
+                    tarEntry.setUserId(1000);
+                    tarEntry.setGroupId(1000);
+
+                    tOut.putArchiveEntry(tarEntry);
+
+                    Files.copy(file, tOut);
+
+                    tOut.closeArchiveEntry();
+
+
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    return FileVisitResult.CONTINUE;
+                }
+
+            });
+
+            tOut.finish();
+        }
+
     }
 
 
