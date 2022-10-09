@@ -25,7 +25,9 @@ class BaseHTMLElement extends HTMLElement {
     }
 
     connectedCallback() {
-        this.shadowRoot.innerHTML = `<style>${this.constructor.styles}</style>${this.render()}`;
+        this.shadowRoot.innerHTML = `
+        <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+        <style>${this.constructor.styles}</style>${this.render()}`;
     }
 
     $(selector) {
@@ -485,6 +487,10 @@ class WebTerm extends BaseHTMLElement {
             );
         });
         new ResizeObserver(termDiv => fitAddon.fit()).observe(window.querySelector('#terminal'));
+        console.log(this);
+        this.execute = command => {
+            ws.send(action('TERMINAL_COMMAND', {command}));
+        };
     }
 }
 
@@ -639,3 +645,162 @@ class VSCode extends BaseHTMLElement {
 }
 
 customElements.define('vs-code', VSCode);
+
+class KataCode extends BaseHTMLElement {
+    static get styles() {
+        return `
+        :host {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            grid-template-rows: 100%;
+            column-gap: 1vw;
+        }
+        #course-progress {
+            text-align: center;
+            padding-bottom: 1em;
+        }
+        #course-progress i {
+            cursor: pointer;
+        }
+        #course {
+            text-align: start;
+            display: flex;
+            flex-direction: column;
+        }
+        .step {
+            overflow-y: scroll;
+            padding: 0 1rem 0 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        code.execute {
+            font-size: 90%;
+            font-family: "SFMono-Regular",Consolas,"Liberation Mono",Courier,monospace;
+            padding: 2px 5px;
+            display: inline-block;
+            cursor: pointer;
+            color: white;
+            background: #555;
+        }
+
+        code {
+            font-size: 90%;
+            font-family: "SFMono-Regular",Consolas,"Liberation Mono",Courier,monospace;
+            padding: 2px 5px;
+            display: inline-block;
+            color: black;
+            background: #eee;
+            white-space: pre-wrap;
+        }
+
+        .btn.next {
+            margin: .25rem .125rem;
+            color: white;
+            background-color: rgb(66,133,244);
+            cursor: pointer;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #0d6efd;
+            border-radius: 0.375rem;
+            float: right;
+        }
+        `;
+    }
+
+    render() {
+        this.courseName = this.getAttribute('course')
+        return `
+            <section id="course"></section>
+            <web-term path="folder"></web-term>
+        `;
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.loadCourse();
+    }
+
+    async loadCourse() {
+
+        const url = `/kata/${this.courseName}`;
+
+        const response = await fetch(url);
+        const course = await response.json();
+        const steps = course.steps;
+        const stepCount = steps.length;
+
+        const courseNode = this.$('#course');
+
+        const titleNode = document.createElement('h1');
+        titleNode.id = 'course-title';
+        titleNode.textContent = course.title;
+        courseNode.appendChild(titleNode);
+
+        const progressNode = document.createElement('div');
+        progressNode.id = 'course-progress';
+
+        const prevNode = document.createElement('i');
+        prevNode.classList.add('fa-solid', 'fa-caret-left');
+        prevNode.addEventListener("click", () => {this.goToPreviousStep()});
+        progressNode.appendChild(prevNode);
+
+        const progressionText = document.createElement('span');
+        progressionText.innerHTML = ' Step <span id="current-step">1</span> of <span id="step-count">'+ stepCount + '</span> ';
+        progressNode.appendChild(progressionText);
+
+        const nextNode = document.createElement('i');
+        nextNode.classList.add('fa-solid', 'fa-caret-right');
+        nextNode.addEventListener("click", () => {this.goToNextStep()});
+        progressNode.appendChild(nextNode);
+
+        courseNode.appendChild(progressNode);
+
+        for (let i = 0; i < stepCount; i++) {
+            const step = steps[i];
+            const stepNode = document.createElement('div');
+            stepNode.id = 'step' + (i+1);
+            stepNode.classList.add('step', 'hidden');
+            stepNode.innerHTML = '<h1>' + step.title + '</h1>' + step.html;
+            if (i + 1 != stepCount) {
+                const buttonNode = document.createElement('div');
+                buttonNode.innerHTML = '<button class="btn next">Continue</button>'
+                buttonNode.addEventListener("click", () => {this.goToNextStep()});
+                stepNode.appendChild(buttonNode);
+            }
+            courseNode.appendChild(stepNode);
+        }
+        this.$$("code.execute").forEach((code, index) => code.addEventListener("click", () => {
+            this.$("web-term").execute(code.innerHTML);
+        }));
+
+        this.displayStep(1);
+
+    }
+
+    displayStep(i) {
+        this.$('#current-step').textContent = i;
+        this.$$(".step").forEach((step, index) => step.classList.add('hidden'));
+        this.$('#step'+ i).classList.remove('hidden');
+    }
+
+    getCurrentStep() {
+        const current = this.$("#current-step").textContent;
+        return parseInt(current, 10);
+    }
+
+    goToPreviousStep() {
+        const current = this.getCurrentStep();
+        this.displayStep(current > 1 ? current - 1 : 1);
+    }
+
+    goToNextStep() {
+        const current = this.getCurrentStep();
+        const total = this.$$(".step").length;
+        this.displayStep(current < total ? current + 1 : total);
+    }
+
+}
+
+customElements.define('kata-code', KataCode);

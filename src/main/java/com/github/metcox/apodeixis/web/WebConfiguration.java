@@ -30,6 +30,7 @@ public class WebConfiguration {
              registry.addResourceHandler("/images/**").addResourceLocations("file:sample/.apodeixis/images/");
              registry.addResourceHandler("/media/**").addResourceLocations("file:sample/.apodeixis/media/");
              registry.addResourceHandler("/css/**").addResourceLocations("file:sample/.apodeixis/css/");
+             registry.addResourceHandler("/fontawesome/**").addResourceLocations("file:sample/.apodeixis/fontawesome/");
              registry.addResourceHandler("/favicon.ico").addResourceLocations("file:sample/.apodeixis/favicon.ico");
          }
      }
